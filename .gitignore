@@ -12,6 +12,8 @@ venv.bak/
 
 # Environment variables
 .env
+.env.*
+*.env
 .env.local
 
 # Local Mock Database Store

@@ -1,5 +1,11 @@
 # ✈️ TravelGo - Full-Stack AWS Cloud Travel Booking Platform
 
+![Python](https://img.shields.io/badge/Python-3.10%2B-blue?logo=python)
+![Flask](https://img.shields.io/badge/Flask-3.1%2B-black?logo=flask)
+![AWS](https://img.shields.io/badge/AWS-DynamoDB%20%7C%20SNS%20%7C%20EC2-orange?logo=amazon-aws)
+![Tests](https://img.shields.io/badge/Pytest-26%20Passed%20(100%25)-brightgreen?logo=pytest)
+![License](https://img.shields.io/badge/License-MIT-green)
+
 TravelGo is a full-stack, enterprise-grade cloud travel booking platform built with **Python Flask, Vanilla JavaScript, HTML5, CSS3, and AWS Services (DynamoDB, SNS, EC2, CloudWatch, Boto3)**.
 
 ---
@@ -35,6 +41,7 @@ TravelGo_AWS/
 ├── .gitignore                # Git ignore rules (protects credentials and virtual environments)
 ├── README.md                 # Complete documentation
 ├── requirements.txt          # Python dependencies
+├── pytest.ini                # Pytest configuration
 ├── run.py                    # Application launch entrypoint
 ├── config.py                 # Environment configurations (Dev, Prod, Test)
 │
@@ -87,44 +94,60 @@ TravelGo_AWS/
 │   ├── iam_policy.json       # Least-privilege IAM policy document
 │   └── ec2_user_data.sh      # EC2 launch bootstrap script
 │
-└── tests/                    # Automated Pytest Suite (21 Passing Tests)
+└── tests/                    # Automated Pytest Suite (26 Passing Tests)
     ├── conftest.py           # Test fixtures and mock state reset
     ├── test_auth.py          # Registration, login, validation tests
     ├── test_search.py        # Multi-modal search and hotel filter tests
     ├── test_booking.py       # Seat selection and booking creation tests
     ├── test_cancellation.py  # Cancellation flow and SNS alert tests
-    └── test_dashboard.py     # Dashboard stats and upcoming/past tests
+    ├── test_dashboard.py     # Dashboard stats and upcoming/past tests
+    └── test_errors.py        # 404 HTML and API error tests
 ```
 
 ---
 
-## 🚀 How to Run Locally (Step-by-Step for Beginners)
+## 🚀 How to Run Locally (Step-by-Step)
 
 ### 1. Prerequisites
 Ensure you have **Python 3.10+** and **Git** installed on your computer.
 
 ### 2. Set Up Virtual Environment
-In your terminal (Command Prompt or PowerShell):
+
+**On Windows (PowerShell):**
 ```powershell
 cd c:\TravelGo_AWS
 python -m venv venv
 .\venv\Scripts\activate
 ```
 
+**On macOS / Linux:**
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
 ### 3. Install Dependencies
-```powershell
+```bash
 pip install -r requirements.txt
 ```
 
 ### 4. Create Environment File
 Copy the provided example file:
+
+**On Windows (PowerShell):**
 ```powershell
 copy .env.example .env
 ```
-*(By default, `USE_MOCK_AWS=true` is enabled, which means you can immediately test all features without needing an AWS account or incurring any charges!)*
+
+**On macOS / Linux:**
+```bash
+cp .env.example .env
+```
+
+*(By default, `USE_MOCK_AWS=true` is enabled, which means you can immediately test all features without needing an AWS account or incurring any cloud charges!)*
 
 ### 5. Start the Application
-```powershell
+```bash
 python run.py
 ```
 Open your web browser and navigate to:
@@ -138,10 +161,10 @@ On the homepage or sign-in page, click **"⚡ Demo User"** or **"⚡ 1-Click Dem
 ## 🧪 Running Automated Tests
 
 Run the comprehensive Pytest suite:
-```powershell
-.\venv\Scripts\pytest -v
+```bash
+pytest
 ```
-All 21 tests will run and verify:
+All 26 tests will run and verify:
 - ✅ User registration, password hashing, and authentication
 - ✅ Multi-modal search (Bus, Train, Flight)
 - ✅ Budget (< $100) and Luxury (5-Star) hotel filters
@@ -149,6 +172,7 @@ All 21 tests will run and verify:
 - ✅ Booking creation and AWS SNS email dispatch
 - ✅ Booking cancellation and refund processing
 - ✅ User dashboard, upcoming bookings, and past history views
+- ✅ Error handling (404 HTML and JSON APIs)
 
 ---
 
