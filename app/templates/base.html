@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token }}">
+  <title>{% block title %}{{ app_name }} - AWS Cloud-Powered Travel Booking{% endblock %}</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <!-- Core Stylesheets -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/navbar.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/hero-search.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/cards.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/booking.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+  <!-- Sticky Navbar -->
+  <header class="site-header">
+    <div class="container navbar">
+      <!-- Logo -->
+      <a href="{{ url_for('main.index') }}" class="brand-logo">
+        <div class="brand-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 2L11 13"></path>
+            <path d="M22 2L15 22L11 13L2 9L22 2Z"></path>
+          </svg>
+        </div>
+        <span class="brand-text">Travel<span>Go</span></span>
+      </a>
+
+      <!-- Desktop Navigation Menu -->
+      <ul class="nav-menu">
+        <li>
+          <a href="{{ url_for('main.index') }}" class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}">
+            <span>Home</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('booking.search', type='bus') }}" class="nav-link {% if request.args.get('type') == 'bus' %}active{% endif %}">
+            <span>🚌 Buses</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('booking.search', type='train') }}" class="nav-link {% if request.args.get('type') == 'train' %}active{% endif %}">
+            <span>🚆 Trains</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('booking.search', type='flight') }}" class="nav-link {% if request.args.get('type') == 'flight' %}active{% endif %}">
+            <span>✈️ Flights</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('booking.search', type='hotel') }}" class="nav-link {% if request.args.get('type') == 'hotel' %}active{% endif %}">
+            <span>🏨 Hotels</span>
+          </a>
+        </li>
+        <li>
+          <a href="{{ url_for('main.about') }}" class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}">
+            <span>AWS Cloud</span>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Auth & Actions -->
+      <div class="nav-actions">
+        {% if is_authenticated %}
+          <div class="user-profile-menu">
+            <button class="user-profile-trigger" id="userProfileTrigger" type="button">
+              <span class="user-avatar-initials">{{ current_user.full_name[:1] | upper }}</span>
+              <span>{{ current_user.full_name.split(' ')[0] }}</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div class="user-dropdown" id="userDropdown">
+              <div class="dropdown-header">
+                <div class="dropdown-user-name">{{ current_user.full_name }}</div>
+                <div class="dropdown-user-email">{{ current_user.email }}</div>
+              </div>
+              <a href="{{ url_for('dashboard.dashboard_view') }}">
+                <span>📊 Dashboard</span>
+              </a>
+              <a href="{{ url_for('dashboard.dashboard_view') }}">
+                <span>🎫 My Bookings</span>
+              </a>
+              <a href="{{ url_for('auth.logout') }}" style="color: var(--color-danger);">
+                <span>🚪 Sign Out</span>
+              </a>
+            </div>
+          </div>
+        {% else %}
+          <a href="{{ url_for('auth.demo_login') }}" class="btn btn-sm btn-outline" title="Instant 1-click test login">
+            <span>⚡ Demo User</span>
+          </a>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-secondary">Sign In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-sm btn-primary">Register</a>
+        {% endif %}
+      </div>
+
+      <!-- Mobile Hamburger Button -->
+      <button class="mobile-toggle" id="mobileToggle" aria-label="Toggle navigation menu">
+        ☰
+      </button>
+    </div>
+
+    <!-- Mobile Drawer -->
+    <div class="mobile-nav-drawer" id="mobileDrawer">
+      <ul class="mobile-menu-list">
+        <li><a href="{{ url_for('main.index') }}">🏠 Home</a></li>
+        <li><a href="{{ url_for('booking.search', type='bus') }}">🚌 Bus Booking</a></li>
+        <li><a href="{{ url_for('booking.search', type='train') }}">🚆 Train Booking</a></li>
+        <li><a href="{{ url_for('booking.search', type='flight') }}">✈️ Flight Booking</a></li>
+        <li><a href="{{ url_for('booking.search', type='hotel') }}">🏨 Hotel Booking</a></li>
+        <li><a href="{{ url_for('main.about') }}">☁️ AWS Architecture</a></li>
+      </ul>
+      <div class="mobile-auth-actions">
+        {% if is_authenticated %}
+          <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-primary btn-block">Dashboard & Trips</a>
+          <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-block">Sign Out</a>
+        {% else %}
+          <a href="{{ url_for('auth.demo_login') }}" class="btn btn-outline btn-block">⚡ Demo User 1-Click Login</a>
+          <a href="{{ url_for('auth.login') }}" class="btn btn-secondary btn-block">Sign In</a>
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-block">Create Free Account</a>
+        {% endif %}
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Notification Banners -->
+  <div class="alert-container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category if category != 'error' else 'danger' }}">
+            <span>{{ message }}</span>
+            <button type="button" class="alert-close" onclick="this.parentElement.remove()">×</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+  </div>
+
+  <!-- Main Content Block -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Footer -->
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <h3>TravelGo</h3>
+        <p>A next-generation full-stack travel booking platform built on the AWS Cloud. Book buses with dynamic seat maps, trains, flights, and hotels in real time.</p>
+        <div class="aws-cloud-badge">
+          <span>☁️ Powered by AWS DynamoDB, SNS, EC2 & CloudWatch</span>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Travel Services</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('booking.search', type='bus') }}">Bus Booking & Seats</a></li>
+          <li><a href="{{ url_for('booking.search', type='train') }}">Train Reservations</a></li>
+          <li><a href="{{ url_for('booking.search', type='flight') }}">Flight Tickets</a></li>
+          <li><a href="{{ url_for('booking.search', type='hotel', category='luxury') }}">Luxury Hotels</a></li>
+          <li><a href="{{ url_for('booking.search', type='hotel', category='budget') }}">Budget Hotels</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>User Account</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('dashboard.dashboard_view') }}">My Dashboard</a></li>
+          <li><a href="{{ url_for('dashboard.dashboard_view') }}">Upcoming Trips</a></li>
+          <li><a href="{{ url_for('dashboard.dashboard_view') }}">Booking History</a></li>
+          <li><a href="{{ url_for('auth.login') }}">Account Login</a></li>
+          <li><a href="{{ url_for('auth.register') }}">New Registration</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Cloud Infrastructure</h4>
+        <ul class="footer-links">
+          <li><a href="{{ url_for('main.about') }}">AWS Architecture Overview</a></li>
+          <li><a href="{{ url_for('main.about') }}#dynamodb">DynamoDB NoSQL Data Store</a></li>
+          <li><a href="{{ url_for('main.about') }}#sns">SNS Instant Email Alerts</a></li>
+          <li><a href="{{ url_for('main.about') }}#security">IAM Least Privilege & Security</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="container footer-bottom">
+      <div>&copy; 2026 TravelGo Cloud Technologies. All rights reserved.</div>
+      <div>Designed with modern Blue & White Aesthetics for high-scale cloud travel.</div>
+    </div>
+  </footer>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container"></div>
+
+  <!-- Global JavaScript -->
+  <script src="{{ url_for('static', filename='js/api.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/search.js') }}"></script>
+
+  {% block extra_scripts %}{% endblock %}
+</body>
+</html>

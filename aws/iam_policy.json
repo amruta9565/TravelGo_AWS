@@ -1,0 +1,43 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TravelGoDynamoDBAccess",
+      "Effect": "Allow",
+      "Action": [
+        "dynamodb:GetItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:Query",
+        "dynamodb:Scan"
+      ],
+      "Resource": [
+        "arn:aws:dynamodb:*:*:table/travelgo_users",
+        "arn:aws:dynamodb:*:*:table/travelgo_users/index/*",
+        "arn:aws:dynamodb:*:*:table/travelgo_bookings",
+        "arn:aws:dynamodb:*:*:table/travelgo_bookings/index/*"
+      ]
+    },
+    {
+      "Sid": "TravelGoSNSPublish",
+      "Effect": "Allow",
+      "Action": [
+        "sns:Publish",
+        "sns:GetTopicAttributes"
+      ],
+      "Resource": "arn:aws:sns:*:*:travelgo-booking-alerts"
+    },
+    {
+      "Sid": "TravelGoCloudWatchLogging",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "logs:DescribeLogStreams"
+      ],
+      "Resource": "arn:aws:logs:*:*:log-group:/travelgo/*"
+    }
+  ]
+}

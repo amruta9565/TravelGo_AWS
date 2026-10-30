@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results - {{ service_type | capitalize }} | TravelGo{% endblock %}
+
+{% block content %}
+<div class="container search-results-page">
+  <!-- Search Summary Header -->
+  <div style="background: #ffffff; border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 1.25rem 1.75rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; box-shadow: var(--shadow-sm);">
+    <div>
+      <h2 style="font-size: 1.5rem; color: var(--primary-navy); margin-bottom: 0.25rem;">
+        Available {{ service_type | capitalize }}s
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        {% if origin or destination %}
+          Route: <strong>{{ origin or 'Anywhere' }}</strong> → <strong>{{ destination or 'Everywhere' }}</strong> | Date: <strong>{{ travel_date }}</strong>
+        {% else %}
+          Showing all top-rated available {{ service_type }} itineraries
+        {% endif %}
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-secondary">
+        <span>✏️ Modify Search</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="results-layout">
+    <!-- Filter Sidebar -->
+    <aside class="filters-sidebar">
+      <div class="filter-group">
+        <h4 class="filter-title">Service Type</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+          <a href="{{ url_for('booking.search', type='bus', origin=origin, destination=destination) }}" class="btn btn-sm {% if service_type == 'bus' %}btn-primary{% else %}btn-secondary{% endif %}" style="justify-content: flex-start;">
+            🚌 Buses
+          </a>
+          <a href="{{ url_for('booking.search', type='train', origin=origin, destination=destination) }}" class="btn btn-sm {% if service_type == 'train' %}btn-primary{% else %}btn-secondary{% endif %}" style="justify-content: flex-start;">
+            🚆 Trains
+          </a>
+          <a href="{{ url_for('booking.search', type='flight', origin=origin, destination=destination) }}" class="btn btn-sm {% if service_type == 'flight' %}btn-primary{% else %}btn-secondary{% endif %}" style="justify-content: flex-start;">
+            ✈️ Flights
+          </a>
+          <a href="{{ url_for('booking.search', type='hotel', destination=destination or origin) }}" class="btn btn-sm {% if service_type == 'hotel' %}btn-primary{% else %}btn-secondary{% endif %}" style="justify-content: flex-start;">
+            🏨 Hotels
+          </a>
+        </div>
+      </div>
+
+      {% if service_type == 'hotel' %}
+        <div class="filter-group">
+          <h4 class="filter-title">Hotel Categories</h4>
+          <a href="{{ url_for('booking.search', type='hotel', category='all', destination=destination) }}" class="filter-option">
+            <span style="font-weight: {% if category == 'all' %}bold{% else %}normal{% endif %};">🔘 All Categories</span>
+          </a>
+          <a href="{{ url_for('booking.search', type='hotel', category='budget', destination=destination) }}" class="filter-option">
+            <span style="color: #059669; font-weight: {% if category == 'budget' %}bold{% else %}normal{% endif %};">🌱 Budget Friendly (< $100)</span>
+          </a>
+          <a href="{{ url_for('booking.search', type='hotel', category='luxury', destination=destination) }}" class="filter-option">
+            <span style="color: #4338ca; font-weight: {% if category == 'luxury' %}bold{% else %}normal{% endif %};">👑 5-Star Luxury Resorts</span>
+          </a>
+        </div>
+      {% endif %}
+
+      <div class="filter-group">
+        <h4 class="filter-title">AWS Cloud Sync</h4>
+        <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;">
+          Instant DynamoDB live inventory availability check with automated SNS email booking alerts.
+        </p>
+      </div>
+    </aside>
+
+    <!-- Main Results List -->
+    <main class="results-list">
+      {% if not results %}
+        <div class="empty-state">
+          <div class="empty-state-icon">🔍</div>
+          <h3>No matching travel options found</h3>
+          <p>Try searching with broader city names or check out all available options.</p>
+          <a href="{{ url_for('booking.search', type=service_type) }}" class="btn btn-primary">
+            View All {{ service_type | capitalize }}s
+          </a>
+        </div>
+      {% else %}
+
+        {% for item in results %}
+          <div class="result-card">
+            <div class="result-main">
+              <div class="result-header">
+                <!-- Title & Badge -->
+                {% if service_type == 'bus' %}
+                  <div class="result-title">{{ item.operator }}</div>
+                  <span class="badge badge-primary">{{ item.bus_type }}</span>
+                {% elif service_type == 'train' %}
+                  <div class="result-title">{{ item.train_name }}</div>
+                  <span class="badge badge-primary">{{ item.train_number }}</span>
+                {% elif service_type == 'flight' %}
+                  <div class="result-title">{{ item.airline }}</div>
+                  <span class="badge badge-primary">{{ item.flight_number }}</span>
+                {% elif service_type == 'hotel' %}
+                  <div class="result-title">{{ item.name }}</div>
+                  {% if item.category == 'luxury' %}
+                    <span class="badge badge-luxury">👑 5-Star Luxury</span>
+                  {% elif item.category == 'budget' %}
+                    <span class="badge badge-budget">🌱 Budget Saver</span>
+                  {% else %}
+                    <span class="badge badge-primary">⭐ 4-Star Premium</span>
+                  {% endif %}
+                {% endif %}
+
+                <span class="rating-badge">★ {{ item.rating }}</span>
+              </div>
+
+              <!-- Route or Location details -->
+              {% if service_type in ['bus', 'train', 'flight'] %}
+                <div class="route-timeline">
+                  <div class="time-box">
+                    <span class="time-val">{{ item.departure_time }}</span>
+                    <span class="station-val">
+                      {{ item.origin }} {% if item.origin_code %}({{ item.origin_code }}){% endif %}
+                    </span>
+                  </div>
+
+                  <div class="route-divider">
+                    <span class="duration-val">{{ item.duration }}</span>
+                    <div class="divider-line {% if service_type == 'bus' %}bus-line{% elif service_type == 'train' %}train-line{% endif %}"></div>
+                    <span style="font-size: 0.7rem; color: #10b981; margin-top: 0.2rem;">
+                      {{ item.stops if service_type == 'flight' else 'Direct' }}
+                    </span>
+                  </div>
+
+                  <div class="time-box">
+                    <span class="time-val">{{ item.arrival_time }}</span>
+                    <span class="station-val">
+                      {{ item.destination }} {% if item.destination_code %}({{ item.destination_code }}){% endif %}
+                    </span>
+                  </div>
+                </div>
+              {% elif service_type == 'hotel' %}
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin: 0.25rem 0;">
+                  📍 <strong>{{ item.location }}</strong>, {{ item.city }}
+                </p>
+              {% endif %}
+
+              <!-- Amenities list -->
+              <div class="amenities-list">
+                {% for amenity in item.amenities %}
+                  <span class="amenity-chip">✓ {{ amenity }}</span>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Price & Action CTA -->
+            <div class="result-cta">
+              <div class="price-display">
+                {% if service_type == 'bus' %}
+                  <div class="price-amount">${{ "%.2f"|format(item.price_per_seat) }}</div>
+                  <div class="price-sub">per seat</div>
+                {% elif service_type == 'train' %}
+                  <div class="price-amount">${{ "%.2f"|format(item.base_price) }}</div>
+                  <div class="price-sub">standard fare</div>
+                {% elif service_type == 'flight' %}
+                  <div class="price-amount">${{ "%.2f"|format(item.price) }}</div>
+                  <div class="price-sub">one way / passenger</div>
+                {% elif service_type == 'hotel' %}
+                  <div class="price-amount">${{ "%.2f"|format(item.price_per_night) }}</div>
+                  <div class="price-sub">per night + taxes</div>
+                {% endif %}
+              </div>
+
+              {% if service_type == 'bus' %}
+                <a href="{{ url_for('booking.bus_seats', bus_id=item.id, date=travel_date) }}" class="btn btn-primary btn-sm">
+                  <span>Select Seats →</span>
+                </a>
+              {% else %}
+                <a href="{{ url_for('booking.checkout', type=service_type, id=item.id, date=travel_date) }}" class="btn btn-primary btn-sm">
+                  <span>Reserve Now →</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+
+      {% endif %}
+    </main>
+  </div>
+</div>
+{% endblock %}

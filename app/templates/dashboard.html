@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard - {{ user.full_name }} | TravelGo{% endblock %}
+
+{% block content %}
+<div class="container dashboard-page">
+  <!-- Profile Hero Banner -->
+  <div class="profile-banner">
+    <div class="profile-info">
+      <div class="profile-avatar-large">
+        {{ user.full_name[:1] | upper }}
+      </div>
+      <div>
+        <h1 class="profile-name">{{ user.full_name }}</h1>
+        <div class="profile-meta">
+          <span>📧 {{ user.email }}</span>
+          {% if user.phone %}<span>📱 {{ user.phone }}</span>{% endif %}
+          <span class="badge badge-primary">AWS Region: us-east-1</span>
+        </div>
+      </div>
+    </div>
+    <div style="display: flex; gap: 0.75rem;">
+      <a href="{{ url_for('main.index') }}" class="btn btn-outline btn-sm">
+        <span>+ Book New Trip</span>
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="btn btn-secondary btn-sm" style="color: var(--color-danger);">
+        <span>Sign Out</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Key Statistics Grid -->
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">🎫</div>
+      <div>
+        <div class="stat-value">{{ stats.total_bookings }}</div>
+        <div class="stat-label">Total Reservations</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-success-bg); color: var(--color-success);">✈️</div>
+      <div>
+        <div class="stat-value">{{ stats.upcoming_count }}</div>
+        <div class="stat-label">Upcoming Trips</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: var(--color-info-bg); color: var(--color-info);">🕒</div>
+      <div>
+        <div class="stat-value">{{ stats.past_count }}</div>
+        <div class="stat-label">Past Trips Completed</div>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon" style="background: #fdf4ff; color: #a855f7;">💳</div>
+      <div>
+        <div class="stat-value">${{ "%.2f"|format(stats.total_spent) }}</div>
+        <div class="stat-label">Total Cloud Spend</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard Tabs (Upcoming / Past / Cancelled) -->
+  <div class="dashboard-tabs">
+    <button class="dash-tab-btn active" data-tab="upcoming" type="button">
+      <span>🚀 Upcoming Bookings ({{ stats.upcoming_count }})</span>
+    </button>
+    <button class="dash-tab-btn" data-tab="past" type="button">
+      <span>📜 Past Travel History ({{ stats.past_count }})</span>
+    </button>
+    <button class="dash-tab-btn" data-tab="cancelled" type="button">
+      <span>❌ Cancelled ({{ stats.cancelled_count }})</span>
+    </button>
+  </div>
+
+  <!-- 1. Upcoming Bookings Panel -->
+  <div id="panel-upcoming" class="booking-items-grid">
+    {% if not upcoming_bookings %}
+      <div class="empty-state">
+        <div class="empty-state-icon">🧳</div>
+        <h3>No upcoming travel bookings</h3>
+        <p>You don't have any scheduled trips right now. Ready for your next journey?</p>
+        <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+          Explore Destinations & Book
+        </a>
+      </div>
+    {% else %}
+      {% for b in upcoming_bookings %}
+        <div class="booking-item-card">
+          <div class="booking-service-icon">
+            {% if b.service_type == 'bus' %}🚌
+            {% elif b.service_type == 'train' %}🚆
+            {% elif b.service_type == 'flight' %}✈️
+            {% else %}🏨
+            {% endif %}
+          </div>
+
+          <div class="booking-details">
+            <span class="booking-id-tag">#{{ b.booking_id }}</span>
+            <div class="booking-title">{{ b.item_title }}</div>
+            <div class="booking-subtext">
+              Date: <strong>{{ b.travel_date }}</strong> | Passenger: <strong>{{ b.passenger_name }}</strong>
+              {% if b.seats %} | Seats: <strong>{{ b.seats | join(', ') }}</strong>{% endif %}
+              {% if b.nights and b.service_type == 'hotel' %} | Duration: <strong>{{ b.nights }} Night(s)</strong>{% endif %}
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            <div style="font-size: 1.3rem; font-weight: 800; color: var(--primary-blue);">
+              ${{ "%.2f"|format(b.total_amount) }}
+            </div>
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+              <a href="{{ url_for('booking.confirmation', booking_id=b.booking_id) }}" class="btn btn-sm btn-outline">
+                <span>View Voucher</span>
+              </a>
+              <button type="button" 
+                      class="btn btn-sm btn-danger open-cancel-modal"
+                      data-id="{{ b.booking_id }}"
+                      data-title="{{ b.item_title }}"
+                      data-amount="{{ '%.2f'|format(b.total_amount) }}">
+                <span>Cancel</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- 2. Past Bookings History Panel -->
+  <div id="panel-past" class="booking-items-grid" style="display: none;">
+    {% if not past_bookings %}
+      <div class="empty-state">
+        <div class="empty-state-icon">📂</div>
+        <h3>No past travel records yet</h3>
+        <p>Completed journeys will automatically appear here for record-keeping and expense claims.</p>
+      </div>
+    {% else %}
+      {% for b in past_bookings %}
+        <div class="booking-item-card" style="opacity: 0.85;">
+          <div class="booking-service-icon" style="background: #f1f5f9; color: var(--text-muted);">
+            {% if b.service_type == 'bus' %}🚌
+            {% elif b.service_type == 'train' %}🚆
+            {% elif b.service_type == 'flight' %}✈️
+            {% else %}🏨
+            {% endif %}
+          </div>
+
+          <div class="booking-details">
+            <span class="booking-id-tag">#{{ b.booking_id }}</span>
+            <div class="booking-title">{{ b.item_title }}</div>
+            <div class="booking-subtext">
+              Date: <strong>{{ b.travel_date }}</strong> | Passenger: <strong>{{ b.passenger_name }}</strong>
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            <span class="badge badge-success">✓ Completed</span>
+            <div style="font-size: 1.15rem; font-weight: 700; color: var(--text-muted);">
+              ${{ "%.2f"|format(b.total_amount) }}
+            </div>
+            <a href="{{ url_for('booking.confirmation', booking_id=b.booking_id) }}" class="btn btn-sm btn-secondary">
+              <span>View Invoice</span>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+
+  <!-- 3. Cancelled Bookings Panel -->
+  <div id="panel-cancelled" class="booking-items-grid" style="display: none;">
+    {% if not cancelled_bookings %}
+      <div class="empty-state">
+        <div class="empty-state-icon">✅</div>
+        <h3>No cancelled bookings</h3>
+        <p>All your confirmed trips remain in good standing.</p>
+      </div>
+    {% else %}
+      {% for b in cancelled_bookings %}
+        <div class="booking-item-card" style="opacity: 0.75; border-left: 4px solid var(--color-danger);">
+          <div class="booking-service-icon" style="background: var(--color-danger-bg); color: var(--color-danger);">
+            ❌
+          </div>
+
+          <div class="booking-details">
+            <span class="booking-id-tag" style="background: var(--color-danger-bg); color: var(--color-danger);">#{{ b.booking_id }}</span>
+            <div class="booking-title">{{ b.item_title }}</div>
+            <div class="booking-subtext">
+              Originally scheduled for: <strong>{{ b.travel_date }}</strong>
+              {% if b.cancelled_at %}<br><span style="color: var(--color-danger);">Cancelled on: {{ b.cancelled_at[:10] }}</span>{% endif %}
+            </div>
+          </div>
+
+          <div class="booking-actions">
+            <span class="badge badge-danger">Cancelled & Refunded</span>
+            <div style="font-size: 1.1rem; color: var(--text-muted); text-decoration: line-through;">
+              ${{ "%.2f"|format(b.total_amount) }}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- Booking Cancellation Confirmation Modal -->
+<div class="modal-overlay" id="cancelModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <h3>Confirm Cancellation</h3>
+      <button type="button" class="modal-close-btn" id="cancelModalClose">×</button>
+    </div>
+    <form action="{{ url_for('booking.cancel_booking') }}" method="POST">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="booking_id" id="modalBookingId" value="">
+
+      <div class="modal-body">
+        <p id="modalBookingText" style="font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+          Are you sure you want to cancel this booking?
+        </p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary btn-sm" id="cancelModalDismiss">Keep Reservation</button>
+        <button type="submit" class="btn btn-danger btn-sm">Yes, Cancel Booking & Send SNS Alert</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

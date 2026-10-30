@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}AWS Cloud Architecture - TravelGo{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3.5rem 0; max-width: 960px;">
+  <div class="section-header">
+    <span class="badge badge-primary">Cloud Engineering Overview</span>
+    <h1 style="font-size: 2.4rem; margin-top: 0.5rem;">How TravelGo Works on AWS</h1>
+    <p>TravelGo combines modern frontend simplicity with enterprise-grade AWS services for high availability, security, and real-time responsiveness.</p>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 2rem;">
+    <!-- Architecture Breakdown -->
+    <div style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 2rem; box-shadow: var(--shadow-sm);">
+      <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">1. Amazon DynamoDB (NoSQL Database)</h3>
+      <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+        TravelGo utilizes Amazon DynamoDB for ultra-low latency key-value storage. 
+        User accounts are partitioned by email/user_id, while reservations are stored in the <code>travelgo_bookings</code> table. 
+        For local offline development and testing, an intelligent local JSON mock driver activates automatically whenever AWS credentials are not configured.
+      </p>
+      <div style="background: var(--bg-page); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.85rem; color: #1e293b;">
+        Tables: <strong>travelgo_users</strong> (Partition Key: email) • <strong>travelgo_bookings</strong> (Partition Key: booking_id)
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 2rem; box-shadow: var(--shadow-sm);">
+      <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">2. Amazon SNS (Simple Notification Service)</h3>
+      <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+        Whenever a traveler completes a booking or cancels an existing trip, the Python backend invokes <code>boto3.client('sns').publish()</code> to trigger an instantaneous email notice.
+        During local development, an event logger captures all notifications for testing assertions.
+      </p>
+      <div style="background: var(--bg-page); padding: 1rem; border-radius: var(--radius-md); font-family: monospace; font-size: 0.85rem; color: #1e293b;">
+        Topic ARN: <strong>arn:aws:sns:us-east-1:*:travelgo-booking-alerts</strong>
+      </div>
+    </div>
+
+    <div style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 2rem; box-shadow: var(--shadow-sm);">
+      <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">3. Amazon EC2 & IAM Instance Profiles</h3>
+      <p style="color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+        Security best practices dictate never placing AWS access keys inside code or servers. 
+        When deployed on EC2, the server inherits permissions automatically via an attached IAM Instance Profile with least-privilege DynamoDB and SNS access policies.
+      </p>
+    </div>
+
+    <div style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 2rem; box-shadow: var(--shadow-sm);">
+      <h3 style="color: var(--primary-navy); margin-bottom: 1rem;">4. Amazon CloudWatch</h3>
+      <p style="color: var(--text-muted); line-height: 1.6;">
+        Application events, search latencies, booking velocity, and error metrics are routed to Amazon CloudWatch logs for live operational monitoring and automated alarms.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}TravelGo - Bus, Train, Flight & Hotel Cloud Booking{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero-section">
+  <div class="container hero-content">
+    <div class="hero-badge">
+      <span>☁️ Enterprise AWS Cloud Travel Platform</span>
+    </div>
+    <h1 class="hero-title">
+      Explore The World With <span>Confidence</span>
+    </h1>
+    <p class="hero-subtitle">
+      Book Buses with dynamic seat selection, high-speed Trains, Flights, and luxury or budget Hotels in real time with automated AWS notifications.
+    </p>
+  </div>
+</section>
+
+<!-- Floating Multi-Modal Search Widget -->
+<section class="search-box-container">
+  <div class="search-card">
+    <!-- Service Switcher Tabs -->
+    <div class="search-tabs">
+      <button class="tab-btn active" data-tab="bus" type="button">
+        <span>🚌 Buses</span>
+      </button>
+      <button class="tab-btn" data-tab="train" type="button">
+        <span>🚆 Trains</span>
+      </button>
+      <button class="tab-btn" data-tab="flight" type="button">
+        <span>✈️ Flights</span>
+      </button>
+      <button class="tab-btn" data-tab="hotel" type="button">
+        <span>🏨 Hotels</span>
+      </button>
+    </div>
+
+    <!-- 1. Bus Search Form -->
+    <form class="search-form active" data-service="bus" action="{{ url_for('booking.search') }}" method="GET">
+      <input type="hidden" name="type" value="bus">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Departure City</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📍</span>
+            <input type="text" name="origin" class="form-control" placeholder="e.g. New York, Boston" value="New York">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Destination City</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🏁</span>
+            <input type="text" name="destination" class="form-control" placeholder="e.g. Boston, Washington" value="Boston">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Travel Date</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📅</span>
+            <input type="date" name="date" class="form-control" value="2026-11-05">
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <span>Find Buses 🔍</span>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- 2. Train Search Form -->
+    <form class="search-form" data-service="train" action="{{ url_for('booking.search') }}" method="GET">
+      <input type="hidden" name="type" value="train">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>From Station / City</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🚆</span>
+            <input type="text" name="origin" class="form-control" placeholder="Origin Station" value="New York">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>To Station / City</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📍</span>
+            <input type="text" name="destination" class="form-control" placeholder="Destination Station" value="Washington DC">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Travel Date</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📅</span>
+            <input type="date" name="date" class="form-control" value="2026-11-06">
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <span>Find Trains 🔍</span>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- 3. Flight Search Form -->
+    <form class="search-form" data-service="flight" action="{{ url_for('booking.search') }}" method="GET">
+      <input type="hidden" name="type" value="flight">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Origin Airport (City / Code)</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🛫</span>
+            <input type="text" name="origin" class="form-control" placeholder="e.g. JFK, New York" value="JFK">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Destination Airport</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🛬</span>
+            <input type="text" name="destination" class="form-control" placeholder="e.g. LAX, Los Angeles" value="LAX">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Departure Date</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📅</span>
+            <input type="date" name="date" class="form-control" value="2026-11-10">
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <span>Find Flights 🔍</span>
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- 4. Hotel Search Form (With Budget and Luxury Filters) -->
+    <form class="search-form" data-service="hotel" action="{{ url_for('booking.search') }}" method="GET">
+      <input type="hidden" name="type" value="hotel">
+      <input type="hidden" name="category" id="hotelCategoryInput" value="all">
+
+      <div class="form-grid">
+        <div class="form-group">
+          <label>City or Hotel Name</label>
+          <div class="input-with-icon">
+            <span class="input-icon">🏨</span>
+            <input type="text" name="destination" class="form-control" placeholder="e.g. New York, Miami, San Francisco" value="New York">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Check-in Date</label>
+          <div class="input-with-icon">
+            <span class="input-icon">📅</span>
+            <input type="date" name="date" class="form-control" value="2026-11-12">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Guests & Rooms</label>
+          <div class="input-with-icon">
+            <span class="input-icon">👥</span>
+            <select class="form-control" name="guests">
+              <option value="1">1 Guest, 1 Room</option>
+              <option value="2" selected>2 Guests, 1 Room</option>
+              <option value="4">4 Guests, 2 Rooms</option>
+            </select>
+          </div>
+        </div>
+        <div>
+          <button type="submit" class="btn btn-primary btn-block">
+            <span>Find Hotels 🔍</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Budget & Luxury Filter Pills -->
+      <div class="hotel-filters">
+        <span class="hotel-filter-label">Quick Tier Filter:</span>
+        <button type="button" class="filter-pill active" data-category="all">All Tiers</button>
+        <button type="button" class="filter-pill budget-pill" data-category="budget">🌱 Budget Saver (< $100/nt)</button>
+        <button type="button" class="filter-pill luxury-pill" data-category="luxury">👑 5-Star Luxury Suites</button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- Featured Destinations Section -->
+<section class="destinations-section container">
+  <div class="section-header">
+    <h2>Popular Destinations</h2>
+    <p>Discover top-rated vacation getaways and metropolitan hubs with instant bus, train, flight, and hotel availability.</p>
+  </div>
+
+  <div class="cards-grid">
+    {% for dest in destinations %}
+      <div class="destination-card">
+        <div class="card-header-art" style="background: {{ dest.gradient }};">
+          <span class="card-badge">{{ dest.badge }}</span>
+          <div class="destination-title-wrap">
+            <div class="destination-city">{{ dest.name }}</div>
+            <div class="destination-country">{{ dest.country }}</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <p class="card-tagline">{{ dest.tagline }}</p>
+          <div class="service-pills">
+            {% for s in dest.services %}
+              <span class="service-pill">{{ s }}</span>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="card-footer">
+          <div class="price-box">
+            <span class="price-label">Fares From</span>
+            <span class="price-value">${{ dest.starting_price }}</span>
+          </div>
+          <a href="{{ url_for('booking.search', destination=dest.name) }}" class="btn btn-sm btn-outline">
+            <span>Book Now →</span>
+          </a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+
+<!-- AWS Cloud Infrastructure Advantage -->
+<section class="features-section">
+  <div class="container">
+    <div class="section-header">
+      <h2>Architected for High-Scale Cloud Reliability</h2>
+      <p>TravelGo leverages native Amazon Web Services to guarantee millisecond database response times and instant notifications.</p>
+    </div>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon-box">⚡</div>
+        <h3 class="feature-title">Amazon DynamoDB</h3>
+        <p class="feature-desc">Single-digit millisecond latency NoSQL storage for user profiles and multi-modal booking transactions.</p>
+        <span class="aws-tag">AWS DynamoDB</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">🔔</div>
+        <h3 class="feature-title">Instant SNS Alerts</h3>
+        <p class="feature-desc">Automated email receipts upon booking confirmations and cancellations via AWS Simple Notification Service topics.</p>
+        <span class="aws-tag">AWS SNS</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">💺</div>
+        <h3 class="feature-title">Dynamic Seat Mapping</h3>
+        <p class="feature-desc">Interactive visual coach selector displaying real-time occupied vs available seating with live pricing updates.</p>
+        <span class="aws-tag">Real-Time UI</span>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon-box">🛡️</div>
+        <h3 class="feature-title">IAM & Cloud Security</h3>
+        <p class="feature-desc">Least privilege EC2 instance profiles, salted password encryption, CSRF protection, and zero hardcoded secrets.</p>
+        <span class="aws-tag">AWS IAM & EC2</span>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}

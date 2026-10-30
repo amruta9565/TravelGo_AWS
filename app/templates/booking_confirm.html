@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {% if mode == 'confirmed' %}
+    Booking Confirmed #{{ booking.booking_id }} | TravelGo
+  {% else %}
+    Checkout & Confirm Booking | TravelGo
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding: 3rem 0;">
+
+  {% if mode == 'confirmed' %}
+    <!-- Booking Confirmation / Voucher Display -->
+    <div class="voucher-card">
+      <div class="voucher-header">
+        <div>
+          <span class="badge" style="background: rgba(255,255,255,0.2); color: #ffffff; margin-bottom: 0.5rem;">
+            ✓ Reservation Confirmed
+          </span>
+          <h2 style="color: #ffffff; font-size: 1.8rem; margin: 0.25rem 0;">
+            TravelGo E-Ticket Voucher
+          </h2>
+          <p style="color: #e0f2fe; font-size: 0.9rem;">
+            Booking ID: <strong style="font-family: monospace; letter-spacing: 0.05em;">{{ booking.booking_id }}</strong>
+          </p>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 2.2rem; font-weight: 800; color: #38bdf8;">
+            ${{ "%.2f"|format(booking.total_amount) }}
+          </div>
+          <span style="font-size: 0.8rem; color: #cbd5e1;">Paid in Full</span>
+        </div>
+      </div>
+
+      <div class="voucher-body">
+        <!-- AWS SNS Status Banner -->
+        <div style="background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 2rem; display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.5rem;">📬</span>
+          <div>
+            <strong style="color: #065f46; font-size: 0.95rem;">AWS SNS Email Notification Dispatched</strong>
+            <p style="color: #047857; font-size: 0.85rem; margin: 0;">
+              A formal confirmation receipt with ticket details has been sent to <strong>{{ booking.user_email }}</strong>.
+            </p>
+          </div>
+        </div>
+
+        <div class="voucher-grid">
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Service Type</span>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);">
+              {{ booking.service_type | capitalize }}
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Travel / Check-in Date</span>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);">
+              {{ booking.travel_date }}
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Item / Route / Hotel</span>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);">
+              {{ booking.item_title }}
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Passenger / Guest Name</span>
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);">
+              {{ booking.passenger_name }}
+            </div>
+          </div>
+          {% if booking.seats %}
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Reserved Seats</span>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-blue);">
+                {{ booking.seats | join(', ') }}
+              </div>
+            </div>
+          {% endif %}
+          {% if booking.nights and booking.service_type == 'hotel' %}
+            <div>
+              <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Duration</span>
+              <div style="font-size: 1.1rem; font-weight: 700; color: var(--primary-navy);">
+                {{ booking.nights }} Night(s)
+              </div>
+            </div>
+          {% endif %}
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Booking Status</span>
+            <div>
+              <span class="badge badge-success">✓ {{ booking.status }}</span>
+            </div>
+          </div>
+          <div>
+            <span style="font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase;">Cloud Storage</span>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Amazon DynamoDB (Table: travelgo_bookings)
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="voucher-footer">
+        <button type="button" class="btn btn-outline" onclick="window.print()">
+          <span>🖨️ Print Voucher</span>
+        </button>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="{{ url_for('dashboard.dashboard_view') }}" class="btn btn-primary">
+            <span>View in Dashboard →</span>
+          </a>
+        </div>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- Checkout Flow -->
+    <div style="max-width: 860px; margin: 0 auto;">
+      <div style="margin-bottom: 2rem; text-align: center;">
+        <span class="badge badge-primary">Step 2 of 2: Checkout</span>
+        <h2 style="font-size: 2rem; color: var(--primary-navy); margin-top: 0.5rem;">
+          Confirm Your Travel Reservation
+        </h2>
+        <p style="color: var(--text-muted);">
+          Review your details and complete your booking. Instant DynamoDB record & SNS confirmation.
+        </p>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 340px; gap: 2rem;">
+        <!-- Left Column: Passenger & Contact Info Form -->
+        <div style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 2rem; box-shadow: var(--shadow-sm);">
+          <h3 style="font-size: 1.25rem; color: var(--primary-navy); margin-bottom: 1.5rem; border-bottom: 1px solid var(--border-light); padding-bottom: 0.75rem;">
+            Passenger & Contact Information
+          </h3>
+
+          <form action="{{ url_for('booking.checkout') }}" method="POST" id="checkoutForm">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="service_type" value="{{ service_type }}">
+            <input type="hidden" name="item_id" value="{{ item.id }}">
+            <input type="hidden" name="item_title" value="{{ item_title }}">
+            <input type="hidden" name="travel_date" value="{{ travel_date }}">
+            <input type="hidden" name="total_amount" value="{{ total_amount }}">
+            <input type="hidden" name="seats" value="{{ seats | join(',') }}">
+            <input type="hidden" name="nights" value="{{ nights }}">
+
+            <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+              <div class="form-group">
+                <label>Primary Passenger / Guest Name *</label>
+                <div class="input-with-icon">
+                  <span class="input-icon">👤</span>
+                  <input type="text" name="passenger_name" class="form-control" 
+                         value="{{ current_user.full_name if is_authenticated else 'Alex Traveler' }}" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Email Address for AWS SNS E-Ticket *</label>
+                <div class="input-with-icon">
+                  <span class="input-icon">📧</span>
+                  <input type="email" name="passenger_email" class="form-control" 
+                         value="{{ current_user.email if is_authenticated else 'alex.traveler@example.com' }}" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Contact Phone Number *</label>
+                <div class="input-with-icon">
+                  <span class="input-icon">📱</span>
+                  <input type="tel" name="passenger_phone" class="form-control" 
+                         value="{{ current_user.phone if is_authenticated else '+1 (555) 019-2834' }}" required>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label>Special Requests (Optional)</label>
+                <textarea name="special_requests" class="form-control" rows="2" style="padding-left: 0.9rem;" 
+                          placeholder="e.g. Vegetarian meal, quiet seat, early check-in"></textarea>
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: 1rem;">
+                <span>Confirm & Complete Booking ($ {{ "%.2f"|format(total_amount) }}) 💳</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Right Column: Order Summary -->
+        <aside style="background: #ffffff; border-radius: var(--radius-lg); border: 1px solid var(--border-light); padding: 1.5rem; box-shadow: var(--shadow-sm); height: fit-content;">
+          <h3 class="summary-title">Reservation Summary</h3>
+
+          <div class="summary-row">
+            <span>Service:</span>
+            <strong>{{ service_type | capitalize }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Details:</span>
+            <strong>{{ item_title }}</strong>
+          </div>
+          <div class="summary-row">
+            <span>Date:</span>
+            <strong>{{ travel_date }}</strong>
+          </div>
+
+          {% if seats %}
+            <div class="summary-row">
+              <span>Seats:</span>
+              <strong style="color: var(--primary-blue);">{{ seats | join(', ') }} ({{ seats | length }})</strong>
+            </div>
+          {% endif %}
+
+          {% if service_type == 'hotel' %}
+            <div class="summary-row">
+              <span>Duration:</span>
+              <strong>{{ nights }} Night(s)</strong>
+            </div>
+          {% endif %}
+
+          <div class="summary-total">
+            <span class="total-label">Total to Pay:</span>
+            <span class="total-amount">${{ "%.2f"|format(total_amount) }}</span>
+          </div>
+
+          <div style="margin-top: 1.5rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4; background: var(--bg-page); padding: 0.75rem; border-radius: var(--radius-sm);">
+            🔒 256-bit encrypted checkout. Instant confirmation receipt sent via AWS SNS topic.
+          </div>
+        </aside>
+      </div>
+    </div>
+  {% endif %}
+
+</div>
+{% endblock %}
