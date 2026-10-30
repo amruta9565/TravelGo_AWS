@@ -491,7 +491,7 @@ class BookingService:
 
     @staticmethod
     def create_booking(user_id, user_email, service_type, item_id, item_title, 
-                       travel_date, passenger_name, passenger_phone, 
+                       travel_date, passenger_name, passenger_phone="", 
                        seats=None, nights=1, total_amount=0.0, special_requests=""):
         """
         Creates and stores booking in database, sends AWS SNS confirmation.

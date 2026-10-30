@@ -81,3 +81,49 @@ def test_flight_booking_flow(client):
     assert response.status_code == 200
     assert b"SkyWing Airways" in response.data
     assert b"245.00" in response.data
+
+
+def test_train_booking_flow(client):
+    """Tests booking a train reservation."""
+    response = client.post("/booking/checkout", data={
+        "service_type": "train",
+        "item_id": "trn_201",
+        "item_title": "Acela High-Speed Express",
+        "travel_date": "2026-12-05",
+        "total_amount": "85.00",
+        "passenger_name": "Diana Prince",
+        "passenger_email": "diana@travelgo.com",
+        "passenger_phone": "+1 555-1111"
+    }, follow_redirects=True)
+
+    assert response.status_code == 200
+    assert b"Acela High-Speed Express" in response.data
+    assert b"85.00" in response.data
+
+
+def test_api_book_and_cancel_endpoints(auth_client):
+    """Tests the JSON API endpoints /api/book and /api/cancel."""
+    client, user = auth_client
+
+    # 1. Book via API
+    book_res = client.post("/api/book", json={
+        "service_type": "bus",
+        "item_id": "bus_101",
+        "item_title": "API Express Bus",
+        "travel_date": "2026-12-25",
+        "seats": ["4A"],
+        "total_amount": 45.00,
+        "passenger_name": user["full_name"],
+        "passenger_email": user["email"]
+    })
+    assert book_res.status_code == 201
+    book_data = book_res.get_json()
+    assert book_data["success"] is True
+    booking_id = book_data["booking"]["booking_id"]
+
+    # 2. Cancel via API
+    cancel_res = client.post("/api/cancel", json={"booking_id": booking_id})
+    assert cancel_res.status_code == 200
+    cancel_data = cancel_res.get_json()
+    assert cancel_data["success"] is True
+    assert cancel_data["booking"]["status"] == "CANCELLED"

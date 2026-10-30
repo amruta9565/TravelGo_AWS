@@ -50,3 +50,27 @@ def test_booking_cancellation_unauthorized(client):
     response = client.post("/booking/cancel", data={"booking_id": "BK-BUS-FAKE"}, follow_redirects=True)
     assert response.status_code == 200
     assert b"Please log in" in response.data
+
+
+def test_double_cancellation_prevention(auth_client):
+    """Tests that cancelling an already cancelled booking returns an error."""
+    client, user = auth_client
+    booking = booking_service.create_booking(
+        user_id=user["user_id"],
+        user_email=user["email"],
+        service_type="train",
+        item_id="trn_201",
+        item_title="Acela Express",
+        travel_date="2026-12-20",
+        passenger_name=user["full_name"],
+        total_amount=85.00
+    )
+    b_id = booking["booking_id"]
+
+    # First cancel
+    client.post("/booking/cancel", data={"booking_id": b_id}, follow_redirects=True)
+
+    # Second cancel attempt
+    res = client.post("/booking/cancel", data={"booking_id": b_id}, follow_redirects=True)
+    assert res.status_code == 200
+    assert b"already been cancelled" in res.data
